@@ -1,0 +1,1 @@
+Helper for getting block position from SerpApi SERP result
