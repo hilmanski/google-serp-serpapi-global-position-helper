@@ -34,9 +34,16 @@ async function scrapeXRayPage(xrayPageUrl) {
     await page.goto(xrayPageUrl);
     // console.log(await page.content()
 
-    // element -> xray tag -> value -> local_results.places[0]
-    // find the x, y position of the element
-    // Find the element in the page
+    // Get list of elements that has xray-json-path attribute
+    const elements = await page.evaluate(() => {
+        const elements = document.querySelectorAll('[xray-json-path]');
+        return Array.from(elements).map(element => element.getAttribute('xray-json-path'));
+    });
+
+    console.log('Elements:', elements);
+
+    // TODO:
+        // how to get list of what elements we're looking for
     const elementPosition = await page.evaluate(() => {
         const element = document.querySelector('[xray-json-path="organic_results[1]"]');
         if (element) {
@@ -51,3 +58,5 @@ async function scrapeXRayPage(xrayPageUrl) {
     await browser.close();
 
 }
+
+// expose as /get  request
