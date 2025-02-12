@@ -35,25 +35,29 @@ async function scrapeXRayPage(xrayPageUrl) {
     // console.log(await page.content()
 
     // Get list of elements that has xray-json-path attribute
-    const elements = await page.evaluate(() => {
+    const elementsWithXray = await page.evaluate(() => {
         const elements = document.querySelectorAll('[xray-json-path]');
         return Array.from(elements).map(element => element.getAttribute('xray-json-path'));
     });
 
-    console.log('Elements:', elements);
+    // Remove all subitems and knowledge_graph's subelement
+    let cleanedElements = elementsWithXray.filter(element => !element.includes('].'));
+    cleanedElements = cleanedElements.filter(element => !element.includes('knowledge_graph.'));
+    console.log(cleanedElements);
+
 
     // TODO:
         // how to get list of what elements we're looking for
-    const elementPosition = await page.evaluate(() => {
-        const element = document.querySelector('[xray-json-path="organic_results[1]"]');
-        if (element) {
-            const rect = element.getBoundingClientRect();
-            return { x: rect.left, y: rect.top };
-        }
-        return null;
-    });
+    // const elementPosition = await page.evaluate(() => {
+    //     const element = document.querySelector('[xray-json-path="organic_results[1]"]');
+    //     if (element) {
+    //         const rect = element.getBoundingClientRect();
+    //         return { x: rect.left, y: rect.top };
+    //     }
+    //     return null;
+    // });
 
-    console.log('Element position:', elementPosition);
+    // console.log('Element position:', elementPosition);
 
     await browser.close();
 
