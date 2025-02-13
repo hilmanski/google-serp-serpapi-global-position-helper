@@ -43,21 +43,49 @@ async function scrapeXRayPage(xrayPageUrl) {
     // Remove all subitems and knowledge_graph's subelement
     let cleanedElements = elementsWithXray.filter(element => !element.includes('].'));
     cleanedElements = cleanedElements.filter(element => !element.includes('knowledge_graph.'));
-    console.log(cleanedElements);
 
+    // Get the position of each element
+    let elementPositions = await Promise.all(cleanedElements.map(async (element) => {
+        const position = await page.evaluate((element) => {
+            const item = document.querySelector(`[xray-json-path="${element}"]`);
+            if (item) {
+                const rect = item.getBoundingClientRect();
+                return { x: rect.left, y: rect.top };
+            }
+            return null;
+        }, element);
+        return { element, position };
+    }));
 
-    // TODO:
-        // how to get list of what elements we're looking for
-    // const elementPosition = await page.evaluate(() => {
-    //     const element = document.querySelector('[xray-json-path="organic_results[1]"]');
-    //     if (element) {
-    //         const rect = element.getBoundingClientRect();
-    //         return { x: rect.left, y: rect.top };
-    //     }
-    //     return null;
-    // });
+    // console.log('Element position:', elementPositions);
 
-    // console.log('Element position:', elementPosition);
+    let globalPositions = {};
+
+    elementPositions.forEach((elementPosition, index) => {
+        let rank = 0;
+        elementPositions.forEach((otherElementPosition) => {
+            if (elementPosition.position.y > otherElementPosition.position.y) {
+                rank++;
+            } else if (elementPosition.position.y === otherElementPosition.position.y) {
+                if (elementPosition.position.x > otherElementPosition.position.x) {
+                    rank++;
+                }
+            }
+
+            // Hack for knowledge_graph, set it to last
+            if (elementPosition.element === 'knowledge_graph') {
+                rank = elementPositions.length;
+            }
+
+            if(rank == 0) {
+                rank = 1;
+            }
+        });
+        globalPositions[elementPosition.element] = { ...elementPosition.position, global_position: rank };
+    });
+
+    console.log('Global positions:', globalPositions);
+
 
     await browser.close();
 
