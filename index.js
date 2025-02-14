@@ -13,7 +13,7 @@ dotenv.config();
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const puppeteer = require('puppeteer');
 
-const searchID = "67ad8bc3c9076ad4e3aa4dd6"
+const searchID = "67ae92f7feec6cf796c5f6eb"
 const archiveData = `https://serpapi.com/searches/${searchID}.json?api_key=${SERPAPI_API_KEY}`
 
 
@@ -24,13 +24,25 @@ fetch(archiveData)
     .then((body) => {
         const jsonBody = JSON.parse(body);
         const xrayPageUrl = jsonBody.search_metadata.raw_html_file.replace(".html", ".xray");
-        scrapeXRayPage(xrayPageUrl);
+        const device = jsonBody.search_parameters.device;
+        scrapeXRayPage(xrayPageUrl, device);
     });
 
-async function scrapeXRayPage(xrayPageUrl) {
+async function scrapeXRayPage(xrayPageUrl, device) {
+    console.log("checking: ", xrayPageUrl, device);
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.setViewport({width: 1080, height: 1024});
+    let viewPortSize = {width: 1080, height: 1024};
+
+    if (device === 'mobile') {
+        viewPortSize = {width: 400, height: 600};
+    }
+
+    if (device === 'tablet') {
+        viewPortSize = {width: 768, height: 1024};
+    }
+
+    await page.setViewport(viewPortSize);
     await page.goto(xrayPageUrl);
     // console.log(await page.content()
 
@@ -40,9 +52,9 @@ async function scrapeXRayPage(xrayPageUrl) {
         return Array.from(elements).map(element => element.getAttribute('xray-json-path'));
     });
 
-    // Remove all subitems and knowledge_graph's subelement
+    // Remove all subitems and knowledge_graph's and answer box subelement
     let cleanedElements = elementsWithXray.filter(element => !element.includes('].'));
-    cleanedElements = cleanedElements.filter(element => !element.includes('knowledge_graph.'));
+    cleanedElements = cleanedElements.filter(element => !element.includes('knowledge_graph.') && !element.includes('answer_box.'));
 
     // Get the position of each element
     let elementPositions = await Promise.all(cleanedElements.map(async (element) => {
@@ -73,12 +85,14 @@ async function scrapeXRayPage(xrayPageUrl) {
             }
 
             // Hack for knowledge_graph, set it to last
-            if (elementPosition.element === 'knowledge_graph') {
-                rank = elementPositions.length;
-            }
+            if (device === "desktop") {
+                if (elementPosition.element === 'knowledge_graph') {
+                    rank = elementPositions.length;
+                }
 
-            if(rank == 0) {
-                rank = 1;
+                if(rank == 0) {
+                    rank = 1;
+                }
             }
         });
         globalPositions[elementPosition.element] = { ...elementPosition.position, global_position: rank };
@@ -86,9 +100,7 @@ async function scrapeXRayPage(xrayPageUrl) {
 
     console.log('Global positions:', globalPositions);
 
-
     await browser.close();
-
 }
 
 // expose as /get  request
