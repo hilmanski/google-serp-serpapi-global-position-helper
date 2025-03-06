@@ -24,7 +24,7 @@ fetch(archiveData)
     .then((body) => {
         const jsonBody = JSON.parse(body);
         const xrayPageUrl = jsonBody.search_metadata.raw_html_file.replace(".html", ".xray");
-        const device = jsonBody.search_parameters.device;
+        const device = jsonBody.search_parameters.device || "desktop";
         scrapeXRayPage(xrayPageUrl, device);
     });
 
@@ -43,60 +43,31 @@ async function scrapeXRayPage(xrayPageUrl, device) {
     }
 
     await page.setViewport(viewPortSize);
-    await page.goto(xrayPageUrl);
+    await page.goto(xrayPageUrl, { waitUntil: 'domcontentloaded' });
     // console.log(await page.content()
 
     // Get list of elements that has xray-json-path attribute
-    const elementsWithXray = await page.evaluate(() => {
-        const elements = document.querySelectorAll('[xray-json-path]');
-        return Array.from(elements).map(element => element.getAttribute('xray-json-path'));
-    });
-
-    // Remove all subitems and knowledge_graph's and answer box subelement
-    let cleanedElements = elementsWithXray.filter(element => !element.includes('].'));
-    cleanedElements = cleanedElements.filter(element => !element.includes('knowledge_graph.') && !element.includes('answer_box.'));
-
-    // Get the position of each element
-    let elementPositions = await Promise.all(cleanedElements.map(async (element) => {
-        const position = await page.evaluate((element) => {
-            const item = document.querySelector(`[xray-json-path="${element}"]`);
-            if (item) {
-                const rect = item.getBoundingClientRect();
-                return { x: rect.left, y: rect.top };
+    const elementPositions = (await page.evaluate(() => {
+        return Array.from(document.querySelectorAll('[xray-json-path]')).map(element => {
+            const { x, y } = element.getBoundingClientRect()
+            return {
+                element: element.getAttribute('xray-json-path'),
+                position: { x, y }
             }
-            return null;
-        }, element);
-        return { element, position };
-    }));
+        })
+    })).filter(elPos => !elPos.element.includes('].'))
+    .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.'))
 
     // console.log('Element position:', elementPositions);
 
-    let globalPositions = {};
-
-    elementPositions.forEach((elementPosition, index) => {
-        let rank = 0;
-        elementPositions.forEach((otherElementPosition) => {
-            if (elementPosition.position.y > otherElementPosition.position.y) {
-                rank++;
-            } else if (elementPosition.position.y === otherElementPosition.position.y) {
-                if (elementPosition.position.x > otherElementPosition.position.x) {
-                    rank++;
-                }
-            }
-
-            // Hack for knowledge_graph, set it to last
-            if (device === "desktop") {
-                if (elementPosition.element === 'knowledge_graph') {
-                    rank = elementPositions.length;
-                }
-
-                if(rank == 0) {
-                    rank = 1;
-                }
-            }
-        });
-        globalPositions[elementPosition.element] = { ...elementPosition.position, global_position: rank };
-    });
+    const globalPositions = elementPositions.sort((elPos, elPosOther) => {
+        if (device === "desktop" && elPos.element === 'knowledge_graph') return 1
+        if (elPos.position.y == elPosOther.position.y) return elPos.position.x - elPos.position.x
+        return elPos.position.y - elPosOther.position.y
+    }).reduce((globalPositions, elPos, index) => {
+        globalPositions[elPos.element] = { ...elPos.position, global_position: index + 1 }
+        return globalPositions
+    }, {})
 
     console.log('Global positions:', globalPositions);
 
