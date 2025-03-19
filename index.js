@@ -1,4 +1,3 @@
-
 // scrape xray page
 // get the global positions back
 // get the original API response
@@ -56,14 +55,17 @@ async function scrapeXRayPage(xrayPageUrl, device) {
             }
         })
     })).filter(elPos => !elPos.element.includes('].'))
-    .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.') && !elPos.element.includes('refine_this_search') )
+       .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.') && !elPos.element.includes('refine_this_search') )
+       .filter(elPos => elPos.position.x !== 0 || elPos.position.y !== 0) // Ignore hidden elements with position 0,0
 
     // console.log('Element position:', elementPositions);
 
-    const globalPositions = elementPositions.sort((elPos, elPosOther) => {
+    const globalPositions = elementPositions.sort((elPos, nextElPos) => {
         if (device === "desktop" && elPos.element === 'knowledge_graph') return 1
-        if (elPos.position.y == elPosOther.position.y) return elPos.position.x - elPosOther.position.x
-        return elPos.position.y - elPosOther.position.y
+
+        // The rest
+        if (elPos.position.y == nextElPos.position.y) return elPos.position.x - nextElPos.position.x
+        return elPos.position.y - nextElPos.position.y
     }).reduce((globalPositions, elPos, index) => {
         globalPositions[elPos.element] = { ...elPos.position, global_position: index + 1 }
         return globalPositions
