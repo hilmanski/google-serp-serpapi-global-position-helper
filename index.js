@@ -12,7 +12,8 @@ dotenv.config();
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const puppeteer = require('puppeteer');
 
-const searchID = "67da3ff34ac94f2f3106d29e"
+// sample id for more data outside organic result: 67da3ff34ac94f2f3106d29e
+const searchID = "67da5b9ea57b437e91699eab"
 const archiveData = `https://serpapi.com/searches/${searchID}.json?api_key=${SERPAPI_API_KEY}`
 
 
@@ -24,10 +25,44 @@ fetch(archiveData)
         const jsonBody = JSON.parse(body);
         const xrayPageUrl = jsonBody.search_metadata.raw_html_file.replace(".html", ".xray");
         const device = jsonBody.search_parameters.device || "desktop";
-        scrapeXRayPage(xrayPageUrl, device);
+        scrapeXRayPage(jsonBody, xrayPageUrl, device);
     });
 
-async function scrapeXRayPage(xrayPageUrl, device) {
+// Merge x,y, and global_position back to original jsonBody
+function mergeGlobalPositions(jsonBody, globalPositions) {
+    Object.keys(globalPositions).forEach(key => {
+        const path = key.split('.');
+        let current = jsonBody;
+
+        for (let i = 0; i < path.length; i++) {
+            const part = path[i];
+            if (part.includes('[')) {
+                const [arrayKey, index] = part.split(/[\[\]]/).filter(Boolean);
+                if (!current[arrayKey] || !current[arrayKey][parseInt(index)]) {
+                    console.warn(`Path not found: ${key}`);
+                    return; // Exit if path is not valid
+                }
+                current = current[arrayKey][parseInt(index)];
+            } else {
+                if (!current[part]) {
+                    console.warn(`Path not found: ${key}`);
+                    return; // Exit if path is not valid
+                }
+                current = current[part];
+            }
+        }
+
+        current.global_position = {
+            x: globalPositions[key].x,
+            y: globalPositions[key].y,
+            ranking: globalPositions[key].position
+        }
+    });
+
+    return jsonBody;
+}
+
+async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
     console.log("checking: ", xrayPageUrl, device);
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -55,23 +90,27 @@ async function scrapeXRayPage(xrayPageUrl, device) {
             }
         })
     })).filter(elPos => !elPos.element.includes('].'))
-       .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.') && !elPos.element.includes('refine_this_search') )
+       .filter(elPos => !elPos.element.includes('knowledge_graph.') 
+                        && !elPos.element.includes('answer_box.') 
+                        && !elPos.element.includes('refine_this_search') 
+                        && !elPos.element.includes('search_information.'))
        .filter(elPos => elPos.position.x !== 0 || elPos.position.y !== 0) // Ignore hidden elements with position 0,0
 
-    // console.log('Element position:', elementPositions);
 
     const globalPositions = elementPositions.sort((elPos, nextElPos) => {
-        if (device === "desktop" && elPos.element === 'knowledge_graph') return 1
-
-        // The rest
         if (elPos.position.y == nextElPos.position.y) return elPos.position.x - nextElPos.position.x
         return elPos.position.y - nextElPos.position.y
     }).reduce((globalPositions, elPos, index) => {
-        globalPositions[elPos.element] = { ...elPos.position, global_position: index + 1 }
+        let ranking = index + 1
+        if (device === "desktop" && elPos.element === 'knowledge_graph') {
+            ranking = "-"
+        }
+        globalPositions[elPos.element] = { ...elPos.position, position: ranking }
         return globalPositions
     }, {})
 
-    console.log('Global positions:', globalPositions);
+    const updatedJsonBody = mergeGlobalPositions(jsonBody, globalPositions);
+    console.log('Updated JSON Body:', updatedJsonBody);
 
     await browser.close();
 }

@@ -11,7 +11,7 @@ Under heavy development
 - Run with `node index`
 
 ## Notes
-- Currently, we always put knowledge_graph at 1st position
+- Currently, we always set knowledge_graph position to "-" for desktop.
 - We ignore any hidden elements (where x==0 and y==0) 
 
 # Status for mobile/tablet
