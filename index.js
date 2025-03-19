@@ -56,7 +56,7 @@ async function scrapeXRayPage(xrayPageUrl, device) {
             }
         })
     })).filter(elPos => !elPos.element.includes('].'))
-    .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.'))
+    .filter(elPos => !elPos.element.includes('knowledge_graph.') && !elPos.element.includes('answer_box.') && !elPos.element.includes('refine_this_search') )
 
     // console.log('Element position:', elementPositions);
 
