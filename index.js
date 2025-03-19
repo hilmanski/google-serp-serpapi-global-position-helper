@@ -13,7 +13,7 @@ dotenv.config();
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const puppeteer = require('puppeteer');
 
-const searchID = "67ae92f7feec6cf796c5f6eb"
+const searchID = "67da3ff34ac94f2f3106d29e"
 const archiveData = `https://serpapi.com/searches/${searchID}.json?api_key=${SERPAPI_API_KEY}`
 
 
@@ -62,7 +62,7 @@ async function scrapeXRayPage(xrayPageUrl, device) {
 
     const globalPositions = elementPositions.sort((elPos, elPosOther) => {
         if (device === "desktop" && elPos.element === 'knowledge_graph') return 1
-        if (elPos.position.y == elPosOther.position.y) return elPos.position.x - elPos.position.x
+        if (elPos.position.y == elPosOther.position.y) return elPos.position.x - elPosOther.position.x
         return elPos.position.y - elPosOther.position.y
     }).reduce((globalPositions, elPos, index) => {
         globalPositions[elPos.element] = { ...elPos.position, global_position: index + 1 }
