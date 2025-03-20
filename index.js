@@ -83,19 +83,21 @@ async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
     // Get list of elements that has xray-json-path attribute
     const elementPositions = (await page.evaluate(() => {
         return Array.from(document.querySelectorAll('[xray-json-path]')).map(element => {
-            const { x, y } = element.getBoundingClientRect()
+            const { x, y } = element.getBoundingClientRect();
             return {
                 element: element.getAttribute('xray-json-path'),
                 position: { x, y }
-            }
-        })
-    })).filter(elPos => !elPos.element.includes('].'))
-       .filter(elPos => !elPos.element.includes('knowledge_graph.') 
-                        && !elPos.element.includes('answer_box.') 
-                        && !elPos.element.includes('refine_this_search') 
-                        && !elPos.element.includes('search_information.'))
-       .filter(elPos => elPos.position.x !== 0 || elPos.position.y !== 0) // Ignore hidden elements with position 0,0
-
+            };
+        });
+    })).filter(elPos => {
+        const element = elPos.element;
+        return !element.includes('].') &&
+               !element.includes('knowledge_graph.') &&
+               !element.includes('answer_box.') &&
+               !element.includes('refine_this_search') &&
+               !element.includes('search_information.') &&
+               (elPos.position.x !== 0 || elPos.position.y !== 0);
+    });
 
     const globalPositions = elementPositions.sort((elPos, nextElPos) => {
         if (elPos.position.y == nextElPos.position.y) return elPos.position.x - nextElPos.position.x

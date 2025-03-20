@@ -14,5 +14,12 @@ Under heavy development
 - Currently, we always set knowledge_graph position to "-" for desktop.
 - We ignore any hidden elements (where x==0 and y==0) 
 
-# Status for mobile/tablet
+## Status for mobile/tablet
 Can't continue since currently the xray class position is not very reliable on mobile.
+
+## TODO
+- Test on 5 queries
+- add endpoint access via GET HTTP URL
+- share overview step on readme:
+    - perform search as usual to SerpApi
+    - access this endpoint
