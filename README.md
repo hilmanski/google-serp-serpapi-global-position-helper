@@ -10,7 +10,16 @@ Under development. Feel free to try and share your feedback.
 - You need to perform a regular search at SerpApi first and get the search ID
 - Run this project (read `how to run` section below)
 - Access through browser or programmatically via the URL `http://localhost:3000/{searchID}`
+- It will return the original json alongside new global_position key
 
+```
+...
+"global_position": {
+    "x": 28,
+    "y": 1067.984375,
+    "ranking": 2
+}
+```
 
 ## How to run
 - Run `npm install` once
@@ -18,10 +27,10 @@ Under development. Feel free to try and share your feedback.
 - Run with `node index`
 - access from URL `http://localhost:3000/{searchID}`
 
+
 ## Notes
 - Currently, we always set knowledge_graph position to "1" for desktop.
 - We ignore any hidden elements (where x==0 and y==0) 
-- If the main key only include arrays, we'll skip the global position for it's parent. Ex: (inline_images, related_questions)
 
 ## TODO
 - test tablet size
