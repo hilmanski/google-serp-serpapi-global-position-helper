@@ -1,32 +1,43 @@
-// scrape xray page
-// get the global positions back
-// get the original API response
-// merge them togerther
-// return alongside the position
-// ensure it works for desktop, mobile, and tablet
-// Final result: x,y position and actual position
-// How people can host this easily? write on ReadMe
-
 const dotenv = require('dotenv');
 dotenv.config();
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 const puppeteer = require('puppeteer');
+const http = require('http');
+const url = require('url');
+const PORT = 3000;
 
-// sample id for more data outside organic result: 67da3ff34ac94f2f3106d29e
-const searchID = "67da5b9ea57b437e91699eab"
-const archiveData = `https://serpapi.com/searches/${searchID}.json?api_key=${SERPAPI_API_KEY}`
+// Run server to make it accessible via URL
+const server = http.createServer(async (req, res) => {
+    const reqUrl = url.parse(req.url, true);
+    const searchID = reqUrl.pathname.slice(1);
 
+    if (req.method === 'GET' && searchID) {
+        const archiveData = `https://serpapi.com/searches/${searchID}.json?api_key=${SERPAPI_API_KEY}`;
 
-// To Think: should you use archived API or should you make it work directly after calling the API?
-    // meaning archiveData is not needed. Maybe create two different use cases
-fetch(archiveData)
-    .then((response) => response.text())
-    .then((body) => {
-        const jsonBody = JSON.parse(body);
-        const xrayPageUrl = jsonBody.search_metadata.raw_html_file.replace(".html", ".xray");
-        const device = jsonBody.search_parameters.device || "desktop";
-        scrapeXRayPage(jsonBody, xrayPageUrl, device);
-    });
+        try {
+            const response = await fetch(archiveData);
+            const body = await response.text();
+            const jsonBody = JSON.parse(body);
+            const xrayPageUrl = jsonBody.search_metadata.raw_html_file.replace(".html", ".xray");
+            const device = jsonBody.search_parameters.device || "desktop";
+
+            const updatedJsonBody = await scrapeXRayPage(jsonBody, xrayPageUrl, device);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(updatedJsonBody))
+        } catch (error) {
+            console.error('Error fetching or processing data:', error);
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Internal Server Error');
+        }
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('ID not Found');
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
 
 // Merge x,y, and global_position back to original jsonBody
 function mergeGlobalPositions(jsonBody, globalPositions) {
@@ -111,10 +122,10 @@ async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
         return globalPositions
     }, {})
 
+    console.log(globalPositions)
+
     const updatedJsonBody = mergeGlobalPositions(jsonBody, globalPositions);
-    console.log('Updated JSON Body:', updatedJsonBody);
-
     await browser.close();
+    
+    return updatedJsonBody
 }
-
-// expose as /get  request

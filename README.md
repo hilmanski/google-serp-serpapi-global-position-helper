@@ -9,17 +9,20 @@ Under heavy development
 - Create `.env` file and add your SERPAPI_API_KEY
 - Adjust the searchID on `index.js` file to ID you want to check
 - Run with `node index`
+- access from URL http://localhost:3000/{searchID}
 
 ## Notes
 - Currently, we always set knowledge_graph position to "-" for desktop.
 - We ignore any hidden elements (where x==0 and y==0) 
+- If the main key only include arrays, we'll skip the global position for it's parent. Ex: (inline_images, related_questions)
 
 ## Status for mobile/tablet
 Can't continue since currently the xray class position is not very reliable on mobile.
 
 ## TODO
 - Test on 5 queries
-- add endpoint access via GET HTTP URL
 - share overview step on readme:
     - perform search as usual to SerpApi
     - access this endpoint
+
+sample ID: 67da5b9ea57b437e91699eab
