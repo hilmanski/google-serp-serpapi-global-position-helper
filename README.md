@@ -14,8 +14,7 @@ Under development. Feel free to try and share your feedback.
 
 ## How to run
 - Run `npm install` once
-- Create `.env` file and add your SERPAPI_API_KEY
-- Adjust the searchID on `index.js` file to ID you want to check
+- Create `.env` file and add `SERPAPI_API_KEY=YOUR_API_KEY`
 - Run with `node index`
 - access from URL `http://localhost:3000/{searchID}`
 

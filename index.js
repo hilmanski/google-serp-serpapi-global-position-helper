@@ -51,13 +51,13 @@ function mergeGlobalPositions(jsonBody, globalPositions) {
                 const [arrayKey, index] = part.split(/[\[\]]/).filter(Boolean);
                 if (!current[arrayKey] || !current[arrayKey][parseInt(index)]) {
                     console.warn(`Path not found: ${key}`);
-                    return; // Exit if path is not valid
+                    return; 
                 }
                 current = current[arrayKey][parseInt(index)];
             } else {
                 if (!current[part]) {
                     console.warn(`Path not found: ${key}`);
-                    return; // Exit if path is not valid
+                    return; 
                 }
                 current = current[part];
             }
@@ -89,9 +89,8 @@ async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
 
     await page.setViewport(viewPortSize);
     await page.goto(xrayPageUrl, { waitUntil: 'domcontentloaded' });
-    // console.log(await page.content()
 
-    // Get list of elements that has xray-json-path attribute
+    // Get list of elements that has xray-json-path attribute and filter it
     const elementPositions = (await page.evaluate(() => {
         return Array.from(document.querySelectorAll('[xray-json-path]')).map(element => {
             const { x, y } = element.getBoundingClientRect();
