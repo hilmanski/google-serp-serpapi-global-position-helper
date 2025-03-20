@@ -116,7 +116,7 @@ async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
     }).reduce((globalPositions, elPos, index) => {
         let ranking = index + 1
         if (device === "desktop" && elPos.element === 'knowledge_graph') {
-            ranking = "-"
+            ranking = 1
         }
         globalPositions[elPos.element] = { ...elPos.position, position: ranking }
         return globalPositions

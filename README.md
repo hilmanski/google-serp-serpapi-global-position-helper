@@ -1,5 +1,5 @@
 # About
-Helper for getting block position from SerpApi SERP result.
+Helper for getting block position from Google Search API by SerpApi.
 
 ## Status
 Under heavy development
@@ -12,7 +12,7 @@ Under heavy development
 - access from URL http://localhost:3000/{searchID}
 
 ## Notes
-- Currently, we always set knowledge_graph position to "-" for desktop.
+- Currently, we always set knowledge_graph position to "1" for desktop.
 - We ignore any hidden elements (where x==0 and y==0) 
 - If the main key only include arrays, we'll skip the global position for it's parent. Ex: (inline_images, related_questions)
 
@@ -20,7 +20,6 @@ Under heavy development
 Can't continue since currently the xray class position is not very reliable on mobile.
 
 ## TODO
-- Test on 5 queries
 - share overview step on readme:
     - perform search as usual to SerpApi
     - access this endpoint
