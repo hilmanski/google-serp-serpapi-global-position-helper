@@ -23,5 +23,7 @@ Can't continue since currently the xray class position is not very reliable on m
 - share overview step on readme:
     - perform search as usual to SerpApi
     - access this endpoint
+- test tablet size
+- test mobile size
 
 sample ID: 67da5b9ea57b437e91699eab

@@ -107,6 +107,7 @@ async function scrapeXRayPage(jsonBody, xrayPageUrl, device) {
                !element.includes('answer_box.') &&
                !element.includes('refine_this_search') &&
                !element.includes('search_information.') &&
+               !element.includes('filters') &&
                (elPos.position.x !== 0 || elPos.position.y !== 0);
     });
 
